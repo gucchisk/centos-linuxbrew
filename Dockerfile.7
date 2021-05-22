@@ -1,0 +1,33 @@
+FROM centos:7
+
+RUN yum groupinstall -y 'Development Tools'
+RUN yum install -y sudo
+
+RUN yum install -y openssl-devel
+WORKDIR /src
+RUN curl -L https://github.com/curl/curl/releases/download/curl-7_76_1/curl-7.76.1.tar.gz | tar zx
+RUN rpm -e --nodeps curl libcurl git
+WORKDIR /src/curl-7.76.1
+RUN ./configure --prefix=/usr --with-openssl --libdir=/lib64 && make && make install
+RUN yum erase -y openssl-devel
+
+RUN yum erase -y perl-Git
+RUN yum install -y https://repo.ius.io/ius-release-el7.rpm
+RUN yum install -y git224
+
+RUN yum clean all && rm -rf /src
+
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8 && useradd -m -s /bin/bash linuxbrew
+ENV PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH
+ENV LD_LIBRARY_PATH=/home/linuxbrew/.linuxbrew/opt/gcc@5/lib/gcc/5
+
+USER linuxbrew
+WORKDIR /home/linuxbrew
+RUN yes | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+RUN brew update
+RUN brew install glibc
+RUN unlink $(brew --prefix)/lib/ld.so && ln -s $(brew --prefix)/opt/glibc/lib/ld-linux-x86-64.so.2 $(brew --prefix)/lib/ld.so
+RUN brew install zlib
+RUN brew install binutils
+RUN brew install gmp isl@0.18 mpfr libmpc
+RUN brew install linux-headers m4 ncurses openssl@1.1
