@@ -2,19 +2,21 @@ name: main
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: CentOS7
+      - name: Build CentOS7
         uses: docker/build-push-action@v2.4.0
         with:
           file: Dockerfile.7
   push:
     needs: [ test ]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - name: Login to DockerHub
